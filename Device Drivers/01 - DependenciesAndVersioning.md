@@ -321,6 +321,23 @@ make -C $(KDIR) M=$(PWD) modules
 - `M=$(PWD)`: Tell kernel build system where your module source is
 - `modules`: Build target for loadable modules
 
+##### What is the Master Makefile?
+The Master Makefile is the primary Makefile located in the root of the Linux kernel source tree (typically at `/lib/modules/$(uname -r)/build/Makefile`). It orchestrates the entire kernel build process and contains:
+
+- Architecture-specific build rules
+- Configuration integration (from .config)
+- Dependency management
+- Module vs built-in driver handling
+- Version magic generation
+- Toolchain settings (compiler, linker flags)
+
+When you use `$(MAKE) -C /lib/modules/$(uname -r)/build`, you invoke this master Makefile with your module's directory as a target, allowing your code to be built with the exact same environment and rules as the kernel itself.
+
+##### Why does my module name change from dash to underscore?
+
+The kernel's module naming convention converts dashes (`-`) to underscores (`_`) internally to avoid conflicts with parameter syntax. Always use underscores when referring to loaded modules (e.g., `rmmod hello_1` not `rmmod hello-1`).
+
+
 #### **Step 2: Preprocessing**
 ```bash
 # Generated command (simplified)
@@ -453,6 +470,34 @@ vmalloc(mod->init_size);  // For __init functions (freed after init)
 - Modules load into kernel's virtual address space (not user-space)
 - Typically in high memory region (above physical RAM mappings)
 - Each module gets its own `struct module` object in kernel memory
+
+A `struct module` is the kernel's **in-memory representation** of a loaded kernel module. It's a C data structure (defined in `include/linux/module.h`) that stores all the metadata and state the kernel needs to manage that specific module.
+
+##### What it contains:
+- **Module name** (e.g., `"hello_1"`)
+- **Function pointers** to its init/exit routines
+- **Memory addresses** where the module's code/data are loaded
+- **License information** (GPL, proprietary, etc.)
+- **Module parameters** and their current values
+- **Dependencies** (other modules it relies on)
+- **Symbol exports** (functions/variables it provides to other modules)
+- **Reference count** (how many things are using it)
+- **List pointers** to link it into the kernel's global module list
+
+##### What it means in practice:
+When you run `insmod hello-1.ko`, the kernel:
+1. Allocates memory for the module's code/data
+2. Creates a new `struct module` object in kernel memory
+3. Fills it with the module's metadata
+4. Adds it to the global linked list of loaded modules
+
+You can see this object indirectly with:
+- `lsmod` (reads the module list)
+- `cat /proc/modules` (direct procfs interface)
+- `modinfo hello-1.ko` (reads metadata from the .ko file, which becomes part of the struct)
+
+The kernel uses this struct to track, manage, and eventually unload the module when you call `rmmod`.
+
 
 #### **Step 9: Symbol Resolution & Relocation**
 The kernel **patches** your module's code with real addresses:
@@ -635,20 +680,36 @@ dmesg: hello: loading out-of-tree module taints kernel
 
 ### Version Magic String Detail
 
-The `vermagic` string contains build configuration:
+The **vermagic** (version magic) string is a fingerprint embedded in every kernel module that describes the **exact build environment** of the kernel it was compiled for. It contains:
+
 ```
 6.8.0-48-generic SMP preempt mod_unload modversions
 └─ version ──┘ └─ flavor ┘ └─ SMP? ┘ └─ preempt? ┘ └─ features ─┘
 ```
 
-**Fields**:
-- **Kernel version**: `6.8.0-48-generic`
-- **SMP**: Symmetric Multi-Processing (multi-core support)
-- **preempt**: Preemptible kernel (low-latency)
-- **mod_unload**: Module unloading supported
-- **modversions**: CRC versioning enabled
+- **Kernel version** (e.g., `5.4.0-70-generic`)
+- **SMP** (Symmetric Multi-Processing support)
+- **Preemption model** (e.g., `preempt`, `voluntary`)
+- **Compiler version** (GCC version used)
+- **Build options** (`mod_unload`, `modversions`, `retpoline`, etc.)
 
-Any mismatch → module rejected (unless forced).
+When you try to load a module with `insmod`, the kernel **compares this string** against its own build configuration. If they don't match **exactly**, it refuses to load the module with:
+
+```
+insmod: ERROR: could not insert module xxx.ko: Invalid module format
+```
+
+This safety check prevents crashes from binary incompatibility between the module and running kernel, ensuring the module was built against **identical** kernel headers and compiler settings.
+
+---
+
+**Preemption model** determines how the kernel allows higher-priority tasks to interrupt (preempt) currently-running tasks:
+
+-  **`preempt`**  : Full preemptive kernel for low-latency desktop systems (highest responsiveness)
+-  **`voluntary`**  : Voluntary preemption points in kernel code (balanced desktop performance)
+-  **`none`**  : No forced preemption (maximum throughput for servers)
+
+This setting affects task scheduling latency and CPU behavior, so mismatches would cause timing inconsistencies and potential system instability.
 
 ### Stacked Module Dependencies
 
