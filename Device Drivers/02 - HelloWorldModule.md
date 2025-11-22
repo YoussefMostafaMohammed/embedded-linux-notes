@@ -216,6 +216,55 @@ MODULE_AUTHOR("LKMPG");
 MODULE_DESCRIPTION("A sample driver demonstrating basic module structure");
 MODULE_VERSION("1.0");
 ```
+`MODULE_DEVICE_TABLE()` is a kernel macro that **publishes a table of hardware IDs** your driver supports, enabling **automatic driver binding** when matching hardware is detected.
+
+### How it works:
+
+1. **You define a device ID table**: A static array listing hardware Vendor IDs, Device IDs, etc. your driver can handle
+2. **The macro exports it**: Makes the table visible to the kernel and userspace (`/lib/modules/*/modules.alias`)
+3. **Kernel performs automatic matching**: When a device is detected (boot or hot-plug), the bus subsystem (PCI, USB, etc.) scans this table
+4. **Match = automatic probe**: If IDs match, kernel loads your driver and calls its `probe()` function
+
+### Example for PCI:
+```c
+static const struct pci_device_id my_pci_tbl[] = {
+    { PCI_DEVICE(0x8086, 0x1234) },  // Intel specific device
+    { PCI_DEVICE(PCI_VENDOR_ID_REALTEK, PCI_DEVICE_ID_REALTEK_8139) },
+    { }  // Terminating entry
+};
+MODULE_DEVICE_TABLE(pci, my_pci_tbl);
+```
+
+**Without this**: You'd need manual `insmod` and `bind` operations every time.  
+**With this**: Plug-and-play just works - the kernel matchmaker handles everything automatically.
+
+A **device ID table** is a static array in your driver that lists **specific hardware identifiers** (Vendor ID, Device ID, etc.) your driver supports. It acts as a **match catalog** for the kernel's automatic driver binding system.
+
+### What it looks like (PCI example):
+
+```c
+static const struct pci_device_id my_device_id_table[] = {
+    { PCI_DEVICE(0x8086, 0x1234) },        // Vendor: 0x8086 (Intel), Device: 0x1234
+    { PCI_DEVICE(0x1234, 0x5678) },        // Another hardware combination
+    { PCI_DEVICE_CLASS(PCI_CLASS_NETWORK_ETHERNET << 8, 0xffff00) }, // All Ethernet devices
+    { } // EMPTY ENTRY - marks end of table (REQUIRED)
+};
+```
+
+### What each entry contains:
+- **Vendor ID**: Manufacturer (e.g., `0x8086` = Intel)
+- **Device ID**: Specific product/chip
+- **Subvendor/Subdevice**: For OEM variants
+- **Class**: Broad category (network, storage, video, etc.)
+- **Mask**: Which bits to match on
+
+### How it's used:
+1. Kernel detects a new PCI device
+2. Reads the hardware IDs from the device's configuration space
+3. Scans all drivers' device ID tables for a matching pattern
+4. **Match found** → Loads your driver and calls its `probe()` function
+
+**Without this table**: No automatic binding - you'd have to manually load and bind the driver every time.
 
 ---
 
@@ -518,9 +567,60 @@ cat /proc/kallsyms | grep __ksymtab
 # These are the symbols actively exported via EXPORT_SYMBOL()
 ```
 
+
 **Key Files:**
 - `/proc/kallsyms`: Runtime symbol table (addresses + names)
 - `/lib/modules/$(uname -r)/build/Module.symvers`: Build-time symbol table (names + CRCs)
+
+
+**Exported symbols** are kernel functions/variables intentionally made **visible and usable** by loadable modules. **Unexported symbols** are private to the kernel and **cannot be accessed** by modules.
+
+### How it works:
+
+**Exporting** (in kernel source):
+```c
+// In kernel source, drivers/base/core.c
+void *kmalloc(size_t size, gfp_t flags) { ... }
+EXPORT_SYMBOL(kmalloc);  // Makes it available to modules
+```
+
+**Module usage**:
+```c
+// In your module - you CAN use this
+void *data = kmalloc(1024, GFP_KERNEL);
+```
+
+**Unexported symbol**:
+```c
+// In kernel source, some internal function
+static void internal_function(void) { ... }
+// No EXPORT_SYMBOL() - modules CANNOT use this
+```
+
+### What the commands show:
+
+```bash
+# All symbols (exported + unexported)
+cat /proc/kallsyms | grep kmalloc
+# Shows: ffffffff81234560 T kmalloc
+
+# ONLY exported symbols
+cat /proc/kallsyms | grep __ksymtab
+# Shows entries in kernel's export symbol table
+```
+
+-  **`T`**  : Code symbol (in text section)
+-  **`D`**  : Initialized data
+-  **`B`**  : Uninitialized data
+
+### Why this matters:
+
+If your module tries to use an **unexported symbol**, you'll get:
+```
+ERROR: "some_function" [/path/to/your.ko] undefined!
+```
+
+The build will fail because the linker can't find that symbol in the kernel's **exported symbol table** (`__ksymtab`). Only symbols explicitly marked with `EXPORT_SYMBOL()` or `EXPORT_SYMBOL_GPL()` are available for modules to use.
 
 ### **How Symbol Resolution Works**
 
@@ -625,7 +725,7 @@ The kernel acts as a **gatekeeper** for all resources:
 System calls are the **controlled gateway** between user and kernel:
 ```c
 // User code
-fd = open("/etc/passwd", O_RDONLY);  // Library call → write() syscall
+fd = open("/etc/passwd", O_RDONLY);  // Library call → triggers the open/openat syscall
 
 // Kernel syscall implementation
 SYSCALL_DEFINE3(open, const char __user *, filename, int, flags, umode_t, mode)
