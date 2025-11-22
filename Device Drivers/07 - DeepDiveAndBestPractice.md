@@ -1,6 +1,6 @@
 # Linux Character Device Drivers - Ultimate Deep Dive & Advanced Topics
 
-## 📑 Table of Contents
+## 📑 Table of Contents 
 
 ### **Part 1: The Ultimate Deep Dive - Every Single Detail**
 1. [Linux Character Device Drivers - Ultimate Deep Dive](#1-linux-character-device-drivers---ultimate-deep-dive)
