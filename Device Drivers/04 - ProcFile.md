@@ -1,6 +1,6 @@
 # Linux Character Device Drivers & procfs
 
-## **Table of Contents**
+## 📑 Table of Contents
 
 ### **procfs Deep Dive**
 1. [procfs vs Character Devices - Complete Guide](#1-procfs-vs-character-devices---complete-guide)

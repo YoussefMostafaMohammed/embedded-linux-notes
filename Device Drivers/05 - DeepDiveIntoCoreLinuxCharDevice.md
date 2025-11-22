@@ -1,6 +1,6 @@
 # **README Part 2: Advanced Linux Character Device Drivers**
 
-## **Table of Contents**
+## 📑 Table of Contents
 
 ### **Part 1: Deep Dive into Core Concepts**
 1. [Linux Character Device Drivers - Deep Dive Explanation](#1-linux-character-device-drivers---deep-dive-explanation)
@@ -89,45 +89,6 @@
      - 3.3.2 [How to Use It Correctly](#332-how-to-use-it-correctly)
    - 3.4 [The Complete Decision Tree](#34-the-complete-decision-tree)
 
-### **Part 4: Hardware Access Deep Dive**
-4. [Hardware Access and Advanced Topics](#4-hardware-access-and-advanced-topics)
-   - 4.1 [__iomem and Hardware Registers](#41-__iomem-and-hardware-registers)
-     - 4.1.1 [When You Need It](#411-when-you-need-it)
-     - 4.1.2 [The __iomem Type](#412-the-__iomem-type)
-     - 4.1.3 [Why Not Just Dereference?](#413-why-not-just-dereference)
-   - 4.2 [readl() / writel() - MMIO Accessors](#42-readl--writel---mmio-accessors)
-     - 4.2.1 [Implementation on x86](#421-implementation-on-x86)
-     - 4.2.2 [Implementation on ARM](#422-implementation-on-arm)
-     - 4.2.3 [Why They Are Necessary](#423-why-they-are-necessary)
-     - 4.2.4 [Real Bug from History](#424-real-bug-from-history)
-   - 4.3 [Does USB Use class_create()? YES!](#43-does-usb-use-class_create-yes)
-   - 4.4 [PCI Devices and class_create()](#44-pci-devices-and-class_create)
-
-### **Part 5: Evolution of Device Creation - The Complete Timeline**
-5. [Evolution of Device Creation - The Complete Timeline](#5-evolution-of-device-creation---the-complete-timeline)
-   - 5.1 [Stage 1: Stone Age (Linux 2.0) - Manual Everything - FULL CODE](#51-stage-1-stone-age-linux-20---manual-everything---full-code)
-     - 5.1.1 [Driver Code](#511-driver-code)
-     - 5.1.2 [User Commands](#512-user-commands)
-     - 5.1.3 [Problems Demonstrated](#513-problems-demonstrated)
-   - 5.2 [Stage 2: Renaissance (Linux 2.4) - Dynamic Major - FULL CODE](#52-stage-2-renaissance-linux-24---dynamic-major---full-code)
-     - 5.2.1 [Driver Code](#521-driver-code)
-     - 5.2.2 [User Commands](#522-user-commands)
-     - 5.2.3 [Improvements and Remaining Issues](#523-improvements-and-remaining-issues)
-   - 5.3 [Stage 3: Enlightenment (Linux 2.6) - cdev + Sysfs - FULL CODE](#53-stage-3-enlightenment-linux-26---cdev--sysfs---full-code)
-     - 5.3.1 [Driver Code](#531-driver-code)
-     - 5.3.2 [What You Get](#532-what-you-get)
-     - 5.3.3 [User Commands](#533-user-commands)
-     - 5.3.4 [What Still Doesn't Work](#534-what-still-doesnt-work)
-   - 5.4 [Stage 4: Modern Era (Linux 3.x+) - Full Integration - FULL CODE](#54-stage-4-modern-era-linux-3x---full-integration---full-code)
-     - 5.4.1 [Driver Code with Error Handling](#541-driver-code-with-error-handling)
-     - 5.4.2 [Magic - No User Intervention](#542-magic---no-user-intervention)
-     - 5.4.3 [Verification Commands](#543-verification-commands)
-     - 5.4.4 [What Happens on rmmod](#544-what-happens-on-rmmod)
-   - 5.5 [Stage 5: Ultra-Modern (Linux 5.x+) - Managed Resources - FULL CODE](#55-stage-5-ultra-modern-linux-5x---managed-resources---full-code)
-     - 5.5.1 [Driver Code](#551-driver-code)
-     - 5.5.2 [Cleanup is AUTOMATIC](#552-cleanup-is-automatic)
-   - 5.6 [Evolution Summary Table](#56-evolution-summary-table)
-
 ### **Part 6: The Ultimate Deep Dive - Every Single Detail**
 6. [Linux Character Device Drivers - The Ultimate Deep Dive](#6-linux-character-device-drivers---the-ultimate-deep-dive)
    - 6.1 [struct file vs struct cdev - The Complete Picture](#61-struct-file-vs-struct-cdev---the-complete-picture)
@@ -182,26 +143,6 @@
      - 6.11.3 [What Happens Internally - All Steps](#6113-what-happens-internally---all-steps)
      - 6.11.4 [The Full Flow Diagram](#6114-the-full-flow-diagram)
      - 6.11.5 [Without class_create() - The Manual Way](#6115-without-class_create---the-manual-way)
-
-### **Part 7: Hardware Access - Complete**
-7. [Hardware Access - MMIO and Registers](#7-hardware-access---mmio-and-registers)
-   - 7.1 [__iomem and Hardware Registers](#71-__iomem-and-hardware-registers)
-     - 7.1.1 [When You Need It](#711-when-you-need-it)
-     - 7.1.2 [The __iomem Type](#712-the-__iomem-type)
-     - 7.1.3 [Why Not Just Dereference?](#713-why-not-just-dereference)
-   - 7.2 [readl() / writel() - The Complete Story](#72-readl--writel---the-complete-story)
-     - 7.2.1 [Implementation on x86](#721-implementation-on-x86)
-     - 7.2.2 [Implementation on ARM](#722-implementation-on-arm)
-     - 7.2.3 [Why They Are Necessary](#723-why-they-are-necessary)
-     - 7.2.4 [Real Bug from History](#724-real-bug-from-history)
-   - 7.3 [Does USB Use class_create()? YES!](#73-does-usb-use-class_create-yes)
-   - 7.4 [PCI Devices and class_create()](#74-pci-devices-and-class_create)
-
-### **Part 8: Best Practices and Common Pitfalls**
-8. [Best Practices and Common Pitfalls](#8-best-practices-and-common-pitfalls)
-   - 8.1 [Do's and Don'ts - Complete List](#81-dos-and-donts---complete-list)
-   - 8.2 [Common Pitfalls with Code Examples](#82-common-pitfalls-with-code-examples)
-   - 8.3 [When to Use Which Pattern - Final Guide](#83-when-to-use-which-pattern---final-guide)
 
 ---
 

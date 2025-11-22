@@ -1,6 +1,6 @@
 # Linux Character Device Drivers
 
-## ** Table of Contents**
+## 📑 Table of Contents
 
 ### **Part 1: Foundation and Basics**
 1. [Introduction to Character Devices](#1-introduction-to-character-devices)
