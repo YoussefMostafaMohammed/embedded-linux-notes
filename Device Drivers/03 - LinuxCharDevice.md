@@ -1289,25 +1289,27 @@ static void usb_gadget_disconnect(struct usb_device *udev)
 ### 6.7 The Complete Decision Tree
 
 
+The error is caused by semicolons and special characters inside the node text. Mermaid interprets these as syntax tokens rather than plain text. The solution is to **wrap all node text containing special characters in quotes**.
+
 ```mermaid
 graph TD
-    A[Start: Writing a driver] --> B{Do you need per-device state?};
+    A["Start: Writing a driver"] --> B{"Do you need per-device state?"};
     B -->|"No (simple virtual dev)"| C[Use static cdev];
-    C --> D[static struct cdev my_cdev; cdev_init(); cdev_add();];
+    C --> D["static struct cdev my_cdev; cdev_init(); cdev_add();"];
     
-    B -->|"Yes (IRQs, buffers, etc.)"| E{How many devices?};
-    E -->|"Exactly 1 device"| F[Static struct + embed];
-    F --> G[static struct my_device my_dev; cdev_init(&my_dev.cdev);];
+    B -->|"Yes (IRQs, buffers, etc.)"| E{"How many devices?"};
+    E -->|"Exactly 1 device"| F["Static struct + embed"];
+    F --> G["static struct my_device my_dev; cdev_init(&my_dev.cdev);"];
     
     E -->|"Multiple/unknown count"| H[Dynamic allocation];
-    H --> I{Can use devm_?};
-    I -->|"Yes (PCI/USB)"| J[Use devm_kzalloc + devm_cdev_add];
-    I -->|"No (legacy)"| K[Use kzalloc + manual cleanup];
+    H --> I{"Can use devm_?"};
+    I -->|"Yes (PCI/USB)"| J["Use devm_kzalloc + devm_cdev_add"];
+    I -->|"No (legacy)"| K["Use kzalloc + manual cleanup"];
     
-    K --> L[struct my_device *dev = kzalloc(...); cdev_init(&dev->cdev);];
+    K --> L["struct my_device *dev = kzalloc(...); cdev_init(&dev->cdev);"];
     
-    M[Rare: Only need cdev, no state] --> N[cdev_alloc];
-    N --> O[struct cdev *cdev = cdev_alloc(); cdev->ops = &fops;];
+    M["Rare: Only need cdev, no state"] --> N[cdev_alloc];
+    N --> O["struct cdev *cdev = cdev_alloc(); cdev->ops = &fops;"];
 ```
 
 ### Quick Reference Table
