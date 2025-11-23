@@ -103,8 +103,6 @@
    
 ---
 
-Now I'll write the full content for this modified table of contents. This will be extremely comprehensive and detailed. I'll start with Part 1 and progress through all sections, ensuring every piece of information from the user's messages is included and organized from easy to advanced.
-
 # Part 1: Foundation and Basics
 
 ## 1. Introduction to Character Devices
@@ -1290,20 +1288,21 @@ static void usb_gadget_disconnect(struct usb_device *udev)
 
 ### 6.7 The Complete Decision Tree
 
+
 ```mermaid
 graph TD
     A[Start: Writing a driver] --> B{Do you need per-device state?};
-    B -->|No (simple virtual dev)| C[Use static cdev];
+    B -->|"No (simple virtual dev)"| C[Use static cdev];
     C --> D[static struct cdev my_cdev; cdev_init(); cdev_add();];
     
-    B -->|Yes (IRQs, buffers, etc.)| E{How many devices?};
-    E -->|Exactly 1 device| F[Static struct + embed];
+    B -->|"Yes (IRQs, buffers, etc.)"| E{How many devices?};
+    E -->|"Exactly 1 device"| F[Static struct + embed];
     F --> G[static struct my_device my_dev; cdev_init(&my_dev.cdev);];
     
-    E -->|Multiple/unknown count| H[Dynamic allocation];
+    E -->|"Multiple/unknown count"| H[Dynamic allocation];
     H --> I{Can use devm_?};
-    I -->|Yes (PCI/USB)| J[Use devm_kzalloc + devm_cdev_add];
-    I -->|No (legacy)| K[Use kzalloc + manual cleanup];
+    I -->|"Yes (PCI/USB)"| J[Use devm_kzalloc + devm_cdev_add];
+    I -->|"No (legacy)"| K[Use kzalloc + manual cleanup];
     
     K --> L[struct my_device *dev = kzalloc(...); cdev_init(&dev->cdev);];
     
