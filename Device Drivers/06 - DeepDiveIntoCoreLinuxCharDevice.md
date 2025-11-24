@@ -19,7 +19,7 @@
      - 1.3.2 [What is dev_t?](#132-what-is-dev_t)
      - 1.3.3 [Bit Layout](#133-bit-layout)
      - 1.3.4 [Example Usage](#134-example-usage)
-     - 1.3.5 [Dynamic vs Static Allocation](#135-dynamic-vs-static-allocation)
+     - 1.3.5 [Dynamic vs Static Allociation](#135-dynamic-vs-static-allocation)
    - 1.4 [Device Registration Methods Deep Dive](#14-device-registration-methods-deep-dive)
      - 1.4.1 [Legacy Method (register_chrdev)](#141-legacy-method-register_chrdev)
      - 1.4.2 [Modern Method (cdev Interface)](#142-modern-method-cdev-interface)
@@ -1646,23 +1646,22 @@ static ssize_t device_read(struct file *filp, ...)
 
 ```mermaid
 graph TD
-    A[Start: Writing a driver] --> B{Do you need per-device state?};
-    B -->|No (simple virtual dev)| C[Use static cdev];
-    C --> D[static struct cdev my_cdev; cdev_init(); cdev_add();];
+    A[Start: Writing a driver] --> B{Do you need per-device state?}
+    B -->|No simple virtual dev| C[Use static cdev]
+    C --> D[static struct cdev my_cdev<br/>cdev_init<br/>cdev_add]
     
-    B -->|Yes (IRQs, buffers, etc.)| E{How many devices?};
-    E -->|Exactly 1 device| F[Static struct + embed];
-    F --> G[static struct my_device my_dev; cdev_init(&my_dev.cdev);];
+    B -->|Yes IRQs buffers etc| E{How many devices?}
+    E -->|Exactly 1 device| F[Static struct + embed]
+    F --> G[static struct my_device my_dev<br/>cdev_init &my_dev.cdev]
     
-    E -->|Multiple/unknown count| H[Dynamic allocation];
-    H --> I{Can use devm_?};
-    I -->|Yes (PCI/USB/hotplug)| J[Use devm_kzalloc + devm_cdev_add];
-    I -->|No (legacy/simple)| K[Use kzalloc + manual cleanup];
+    E -->|Multiple unknown count| H[Dynamic allocation]
+    H --> I{Can use devm_?}
+    I -->|Yes PCI USB hotplug| J[Use devm_kzalloc<br/>devm_cdev_add]
+    I -->|No legacy simple| K[Use kzalloc<br/>manual cleanup]
+    K --> L[struct my_device *dev = kzalloc...<br/>cdev_init &dev->cdev]
     
-    K --> L[struct my_device *dev = kzalloc(...); cdev_init(&dev->cdev);];
-    
-    M[Rare: Only need cdev, no state] --> N[cdev_alloc];
-    N --> O[struct cdev *cdev = cdev_alloc(); cdev->ops = &fops;];
+    M[Rare: Only need cdev, no state] --> N[cdev_alloc]
+    N --> O[struct cdev *cdev = cdev_alloc<br/>cdev->ops = &fops]
 ```
 
 **Decision Table**:
