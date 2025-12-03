@@ -1,7 +1,7 @@
 # **Linux Kernel Module Development Guide: Concurrency, Synchronization & Debugging**
 
-## **Table of Contents**
-
+## 📑 Table of Contents
+s
 1. [Introduction](#introduction)
 2. [Process & Thread Management](#process-thread-management)
    - 2.1 [Blocking with Wait Queues](#blocking-wait-queues)

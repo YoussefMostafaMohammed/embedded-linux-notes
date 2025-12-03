@@ -1,6 +1,7 @@
 # Linux GPIO Device Drivers - Complete Technical Guide
 
-## Table of Contents
+## 📑 Table of Contents
+
 1. [Chapter Overview](#chapter-overview)
 2. [Why Not Direct Register Access?](#why-not-direct-register-access)
 3. [The Linux GPIO Subsystem Architecture](#the-linux-gpio-subsystem-architecture)
